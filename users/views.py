@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import RegisterSerializer, ProfileSerializer
 from .models import Profile
+from .permissions import IsOwnerOrReadOnly
 
 class RegisterView(APIView):
     def post(self, request):
@@ -27,3 +28,8 @@ class ProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+class ProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
