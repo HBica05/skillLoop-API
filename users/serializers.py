@@ -1,25 +1,23 @@
+from dj_rest_auth.registration.serializers import RegisterSerializer as DefaultRegisterSerializer
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Profile
 
-class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+# Custom registration serializer to include extra fields (optional)
+class RegisterSerializer(DefaultRegisterSerializer):
+    bio = serializers.CharField(required=False)
+    location = serializers.CharField(required=False)
 
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'password']
-
-    def create(self, validated_data):
-        user = User.objects.create_user(
-            username = validated_data['username'],
-            email = validated_data['email'],
-            password = validated_data['password']
+    def custom_signup(self, request, user):
+        Profile.objects.create(
+            user=user,
+            bio=self.validated_data.get('bio', ''),
+            location=self.validated_data.get('location', '')
         )
-        return user
 
-# Serializer for Profile CRUD
+# Serializer for Profile CRUD functionality
 class ProfileSerializer(serializers.ModelSerializer):
-    user = serializers.ReadOnlyField(source='user.username')  # optional
+    user = serializers.ReadOnlyField(source='user.username')
 
     class Meta:
         model = Profile
