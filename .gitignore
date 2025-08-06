@@ -1,22 +1,11 @@
-# Byte-compiled / cache
 __pycache__/
 *.py[cod]
-
-# Django database
 db.sqlite3
-
-# Environment
 venv/
 .env
 .env.*
-
-# VS Code
 .vscode/
-
-# Node / React (if you have frontend)
 node_modules/
 build/
 dist/
-
-# Logs
 *.log
