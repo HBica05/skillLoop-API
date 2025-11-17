@@ -6,35 +6,38 @@ from pathlib import Path
 import os
 import dj_database_url
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# ---------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 # Core security & debug
-# -----------------------------------------------------------------------------
-# In Heroku, set DJANGO_SECRET_KEY and DJANGO_DEBUG env vars.
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    "dev-only-secret-key-change-me"  # fallback for local dev only
-)
+# ---------------------------------------------------------------------
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-secret-key-change-me")
+DEBUG = os.environ.get("DEBUG", "True").lower() not in ("0", "false", "no")
 
-DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() not in ("0", "false")
-
-# Comma‑separated string in env works too, e.g. "your-app.herokuapp.com"
 ALLOWED_HOSTS = os.environ.get(
     "ALLOWED_HOSTS",
+    # add your real hosts in Heroku config vars
     "127.0.0.1,localhost"
 ).split(",")
 
-# Heroku/Frontend hosts you trust for cookies/CSRF
 CSRF_TRUSTED_ORIGINS = os.environ.get(
     "CSRF_TRUSTED_ORIGINS",
-    "http://localhost:3000,https://*.herokuapp.com"
+    "http://localhost:3000"
 ).split(",")
 
-# -----------------------------------------------------------------------------
-# Installed apps
-# -----------------------------------------------------------------------------
+# CORS – using token auth, so no cookies needed
+CORS_ALLOWED_ORIGINS = os.environ.get(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:3000"
+).split(",")
+CORS_ALLOW_CREDENTIALS = False
+
+# ---------------------------------------------------------------------
+# Apps
+# ---------------------------------------------------------------------
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -53,16 +56,13 @@ INSTALLED_APPS = [
     "users.apps.UsersConfig",
 ]
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 # Middleware
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-
-    # Whitenoise must be right after SecurityMiddleware
-    "whitenoise.middleware.WhiteNoiseMiddleware",
-
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # after Security
     "django.contrib.sessions.middleware.SessionMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -71,16 +71,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-
-# -----------------------------------------------------------------------------
-# CORS (frontend)
-# -----------------------------------------------------------------------------
-# Add more origins via env var CORS_ALLOWED_ORIGINS (comma separated)
-CORS_ALLOWED_ORIGINS = os.environ.get(
-    "CORS_ALLOWED_ORIGINS",
-    "http://localhost:3000"
-).split(",")
-CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = "skillloop.urls"
 
@@ -101,26 +91,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "skillloop.wsgi.application"
 
-# -----------------------------------------------------------------------------
-# Database
-# -----------------------------------------------------------------------------
-# Default: SQLite for local dev
+# ---------------------------------------------------------------------
+# Database (SQLite locally; Postgres on Heroku)
+# ---------------------------------------------------------------------
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
-
-# If Heroku provides a DATABASE_URL, use it
 if os.environ.get("DATABASE_URL"):
-    DATABASES["default"] = dj_database_url.config(
-        conn_max_age=600, ssl_require=True
-    )
+    DATABASES["default"] = dj_database_url.config(conn_max_age=600, ssl_require=True)
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 # Password validation
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -128,27 +113,42 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 # I18N / TZ
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# -----------------------------------------------------------------------------
-# Static files (Whitenoise)
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# Static files (WhiteNoise)
+# ---------------------------------------------------------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# Let Heroku know the original scheme so request.is_secure() works
+# Django 4.2+ recommended WhiteNoise config:
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+# Make request.is_secure() accurate behind Heroku’s proxy
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# -----------------------------------------------------------------------------
+# Extra hardening when DEBUG=False
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+
+# ---------------------------------------------------------------------
 # DRF / dj-rest-auth
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_AUTH_REGISTER_SERIALIZERS = {
