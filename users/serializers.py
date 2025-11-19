@@ -6,9 +6,12 @@ from rest_framework import serializers
 from .models import Profile, Skill, SkillExchange
 
 
+# -------------------------------------------------------------------
+# Registration Serializer
+# -------------------------------------------------------------------
 class RegisterSerializer(DefaultRegisterSerializer):
     """
-    Extends dj-rest-auth's RegisterSerializer so that when a user signs up
+    Extends dj-rest-auth's RegisterSerializer so that when a user signs up,
     we also create a Profile with optional bio & location.
     """
 
@@ -22,7 +25,6 @@ class RegisterSerializer(DefaultRegisterSerializer):
         return data
 
     def custom_signup(self, request, user):
-        # Create the Profile when the user signs up
         Profile.objects.create(
             user=user,
             bio=self.validated_data.get("bio", ""),
@@ -30,24 +32,73 @@ class RegisterSerializer(DefaultRegisterSerializer):
         )
 
 
-class SkillSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Skill
-        # If you later add fields to Skill they will automatically appear
-        fields = "__all__"
-
-
+# -------------------------------------------------------------------
+# Profile Serializer
+# -------------------------------------------------------------------
 class ProfileSerializer(serializers.ModelSerializer):
-    # user is set automatically; don’t allow the client to change it
+    """
+    Profile belongs to a User (One-To-One).
+    We expose username instead of raw user ID.
+    """
+
+    user = serializers.StringRelatedField(read_only=True)
+
     class Meta:
         model = Profile
-        fields = ["id", "user", "bio", "location", "skills"]
-        read_only_fields = ["user"]
+        fields = ["id", "user", "bio", "location", "skills", "created_at"]
+        read_only_fields = ["user", "created_at"]
 
 
+# -------------------------------------------------------------------
+# Skill Serializer
+# -------------------------------------------------------------------
+class SkillSerializer(serializers.ModelSerializer):
+    """
+    Serializer for individual skills.
+    Owner is read-only and populated automatically.
+    """
+
+    owner = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = Skill
+        fields = [
+            "id",
+            "owner",
+            "name",
+            "description",
+            "created_at",
+        ]
+        read_only_fields = ["owner", "created_at"]
+
+
+# -------------------------------------------------------------------
+# Skill Exchange Serializer
+# -------------------------------------------------------------------
 class SkillExchangeSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Skill Exchanges.
+    Automatically sets requester (owner) and timestamps.
+    """
+
+    requester = serializers.StringRelatedField(read_only=True)
+    offered_skill = SkillSerializer(read_only=True)
+    requested_skill = SkillSerializer(read_only=True)
+
     class Meta:
         model = SkillExchange
-        fields = "__all__"
-        # These are set by the backend, not the client
-        read_only_fields = ["owner", "created_at", "updated_at"]
+        fields = [
+            "id",
+            "requester",
+            "offered_skill",
+            "requested_skill",
+            "message",
+            "status",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "requester",
+            "created_at",
+            "updated_at",
+        ]
