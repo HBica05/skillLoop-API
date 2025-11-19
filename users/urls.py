@@ -1,9 +1,8 @@
-from django.urls import path, include
+from django.urls import path
 
 from .views import (
-    CustomRegisterView,
+    MyProfileView,
     ProfileListView,
-    ProfileDetailView,
     SkillListCreateView,
     SkillDetailView,
     SkillExchangeListCreateView,
@@ -11,17 +10,9 @@ from .views import (
 )
 
 urlpatterns = [
-    # Auth endpoints from dj-rest-auth
-    path("dj-rest-auth/", include("dj_rest_auth.urls")),
-    path(
-        "dj-rest-auth/registration/",
-        CustomRegisterView.as_view(),
-        name="custom_register",
-    ),
-
     # Profiles
+    path("profile/me/", MyProfileView.as_view(), name="my-profile"),
     path("profiles/", ProfileListView.as_view(), name="profile-list"),
-    path("profiles/<int:pk>/", ProfileDetailView.as_view(), name="profile-detail"),
 
     # Skills
     path("skills/", SkillListCreateView.as_view(), name="skill-list-create"),
@@ -31,11 +22,11 @@ urlpatterns = [
     path(
         "exchanges/",
         SkillExchangeListCreateView.as_view(),
-        name="exchange-list-create",
+        name="skill-exchange-list-create",
     ),
     path(
         "exchanges/<int:pk>/",
         SkillExchangeDetailView.as_view(),
-        name="exchange-detail",
+        name="skill-exchange-detail",
     ),
 ]
