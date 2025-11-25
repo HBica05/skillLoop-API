@@ -1,131 +1,66 @@
+from django.contrib.auth.models import User
 from rest_framework import generics, permissions
-from rest_framework.exceptions import PermissionDenied
 
 from .models import Profile, Skill, SkillExchange
 from .serializers import (
+    RegisterSerializer,
     ProfileSerializer,
     SkillSerializer,
     SkillExchangeSerializer,
 )
 
 
-# -------------------------------------------------------------------
-# Permissions
-# -------------------------------------------------------------------
-class IsOwnerOrReadOnly(permissions.BasePermission):
+class RegisterAPIView(generics.CreateAPIView):
     """
-    Only allow owners of an object to edit it.
-    Everyone can read (GET, HEAD, OPTIONS).
+    Simple registration endpoint:
+    - creates a User
+    - creates a Profile (bio, location optional)
+    - returns a token (handled by dj-rest-auth)
     """
+    serializer_class = RegisterSerializer
+    permission_classes = [permissions.AllowAny]
 
-    def has_object_permission(self, request, view, obj):
-        # Read permissions allowed for any request
-        if request.method in permissions.SAFE_METHODS:
-            return True
-
-        # For our models, "owner" / "requester" / "user" represent the owner
-        owner = getattr(obj, "owner", None) or getattr(obj, "requester", None) or getattr(
-            obj, "user", None
-        )
-
-        return owner == request.user
+    def perform_create(self, serializer):
+        # IMPORTANT: pass request to save(), so dj-rest-auth/allauth
+        # can run custom_signup and related logic correctly.
+        user = serializer.save(request=self.request)
+        return user
 
 
-# -------------------------------------------------------------------
-# Profile views
-# -------------------------------------------------------------------
 class MyProfileView(generics.RetrieveUpdateAPIView):
     """
-    Retrieve & update the currently logged-in user's profile.
-    URL: /api/profile/me/
+    Get or update the currently logged-in user's profile.
+    GET /api/me/
+    PUT/PATCH /api/me/
     """
-
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        try:
-            return self.request.user.profile
-        except Profile.DoesNotExist:
-            # In theory signals create it, but just in case:
-            raise PermissionDenied("Profile does not exist for this user.")
+        # Ensure the user always has a profile
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        return profile
 
 
-# (Optional) List all profiles – e.g. for discovery.
-class ProfileListView(generics.ListAPIView):
-    """
-    Public read-only list of profiles (no editing here).
-    URL: /api/profiles/
-    """
-
-    queryset = Profile.objects.select_related("user").prefetch_related("skills")
-    serializer_class = ProfileSerializer
-    permission_classes = [permissions.AllowAny]
-
-
-# -------------------------------------------------------------------
-# Skill views
-# -------------------------------------------------------------------
 class SkillListCreateView(generics.ListCreateAPIView):
     """
-    List all skills (GET) or create a new skill for the current user (POST).
-    URL: /api/skills/
+    List all skills, or create a new skill for the logged-in user.
     """
-
+    queryset = Skill.objects.all()
     serializer_class = SkillSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-
-    def get_queryset(self):
-        # Everyone can see all skills for now
-        return Skill.objects.select_related("owner").all()
+    permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
 
-class SkillDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    Retrieve, update or delete a single skill.
-    URL: /api/skills/<id>/
-    """
-
-    queryset = Skill.objects.select_related("owner").all()
-    serializer_class = SkillSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
-
-
-# -------------------------------------------------------------------
-# SkillExchange views
-# -------------------------------------------------------------------
 class SkillExchangeListCreateView(generics.ListCreateAPIView):
     """
-    List exchanges (only those involving the current user) and create new ones.
-    URL: /api/exchanges/
+    List all skill exchanges, or create a new one.
     """
-
+    queryset = SkillExchange.objects.all()
     serializer_class = SkillExchangeSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        user = self.request.user
-        # Only show exchanges where the user is the requester
-        # (you could expand this later to show "other side" too)
-        return SkillExchange.objects.filter(requester=user).select_related(
-            "requester", "offered_skill", "requested_skill"
-        )
-
     def perform_create(self, serializer):
         serializer.save(requester=self.request.user)
-
-
-class SkillExchangeDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    Retrieve, update or delete a single exchange, only if you are the requester.
-    URL: /api/exchanges/<id>/
-    """
-
-    queryset = SkillExchange.objects.select_related(
-        "requester", "offered_skill", "requested_skill"
-    )
-    serializer_class = SkillExchangeSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]

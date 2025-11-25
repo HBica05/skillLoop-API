@@ -19,7 +19,6 @@ DEBUG = os.environ.get("DEBUG", "True").lower() not in ("0", "false", "no")
 
 ALLOWED_HOSTS = os.environ.get(
     "ALLOWED_HOSTS",
-    # add your real hosts in Heroku config vars
     "127.0.0.1,localhost"
 ).split(",")
 
@@ -28,11 +27,11 @@ CSRF_TRUSTED_ORIGINS = os.environ.get(
     "http://localhost:3000"
 ).split(",")
 
-# CORS – using token auth, so no cookies needed
 CORS_ALLOWED_ORIGINS = os.environ.get(
     "CORS_ALLOWED_ORIGINS",
     "http://localhost:3000"
 ).split(",")
+
 CORS_ALLOW_CREDENTIALS = False
 
 # ---------------------------------------------------------------------
@@ -46,13 +45,17 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    # Third-party
     "rest_framework",
     "rest_framework.authtoken",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
     "corsheaders",
+    "dj_rest_auth",
+    "dj_rest_auth.registration",
 
+    # Local
     "users.apps.UsersConfig",
 ]
 
@@ -62,7 +65,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # after Security
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -92,7 +95,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "skillloop.wsgi.application"
 
 # ---------------------------------------------------------------------
-# Database (SQLite locally; Postgres on Heroku)
+# Database
 # ---------------------------------------------------------------------
 DATABASES = {
     "default": {
@@ -100,6 +103,7 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
 if os.environ.get("DATABASE_URL"):
     DATABASES["default"] = dj_database_url.config(conn_max_age=600, ssl_require=True)
 
@@ -114,7 +118,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # ---------------------------------------------------------------------
-# I18N / TZ
+# i18n
 # ---------------------------------------------------------------------
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -122,35 +126,36 @@ USE_I18N = True
 USE_TZ = True
 
 # ---------------------------------------------------------------------
-# Static files (WhiteNoise)
+# Static
 # ---------------------------------------------------------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# Django 4.2+ recommended WhiteNoise config:
 STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
 
-# Make request.is_secure() accurate behind Heroku’s proxy
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# Extra hardening when DEBUG=False
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_SSL_REDIRECT = True
 
 # ---------------------------------------------------------------------
-# DRF / dj-rest-auth
+# DRF / AUTH
 # ---------------------------------------------------------------------
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-REST_AUTH_REGISTER_SERIALIZERS = {
-    "REGISTER_SERIALIZER": "users.serializers.RegisterSerializer",
-}
+ACCOUNT_ADAPTER = "users.adapters.NoPhoneAccountAdapter"
+ACCOUNT_AUTHENTICATION_METHOD = "username"
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_USERNAME_REQUIRED = True
+
+ACCOUNT_SIGNUP_FIELDS = ["username", "email"]
+
+# No phone number, so disable all phone logic
+ACCOUNT_FORMS = {}
