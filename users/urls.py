@@ -1,22 +1,20 @@
 from django.urls import path
+
 from .views import (
-    RegisterAPIView,
-    MyProfileView,
-    SkillListCreateView,
-    SkillExchangeListCreateView,
     ContactCreateView,
-    ContactListView,
+    SkillListCreateView,
+    SkillDetailView,
+    SkillExchangeListCreateView,
 )
 
 urlpatterns = [
-    path("register/", RegisterAPIView.as_view(), name="register"),
-    path("me/", MyProfileView.as_view(), name="my-profile"),
-    path("skills/", SkillListCreateView.as_view(), name="skill-list-create"),
-    path(
-        "skill-exchanges/",
-        SkillExchangeListCreateView.as_view(),
-        name="skill-exchange-list-create",
-    ),
+    # Contact
     path("contact/", ContactCreateView.as_view(), name="contact-create"),
-    path("contact/messages/", ContactListView.as_view(), name="contact-list"),
+
+    # Skills
+    path("skills/", SkillListCreateView.as_view(), name="skill-list-create"),
+    path("skills/<int:pk>/", SkillDetailView.as_view(), name="skill-detail"),
+
+    # Exchanges
+    path("exchanges/", SkillExchangeListCreateView.as_view(), name="exchange-list-create"),
 ]

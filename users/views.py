@@ -1,71 +1,20 @@
 from django.contrib.auth.models import User
+from django.db.models import Q
+
 from rest_framework import generics, permissions
 
-from .models import Profile, Skill, SkillExchange, Contact
+from .models import Skill, SkillExchange, Contact
 from .serializers import (
-    RegisterSerializer,
-    ProfileSerializer,
     SkillSerializer,
     SkillExchangeSerializer,
     ContactSerializer,
 )
+from .permissions import IsOwnerOrReadOnly
 
 
-class RegisterAPIView(generics.CreateAPIView):
-    """
-    Simple registration endpoint:
-    - creates a User
-    - creates a Profile (bio, location optional)
-    """
-    serializer_class = RegisterSerializer
-    permission_classes = [permissions.AllowAny]
-
-    def perform_create(self, serializer):
-        # Save the user using our custom serializer
-        user = serializer.save()
-        bio = serializer.validated_data.get("bio", "")
-        location = serializer.validated_data.get("location", "")
-
-        # Avoid UNIQUE constraint issues
-        Profile.objects.get_or_create(
-            user=user,
-            defaults={"bio": bio, "location": location},
-        )
-        return user
-
-
-class MyProfileView(generics.RetrieveUpdateAPIView):
-    """
-    Get or update the currently logged-in user's profile.
-    GET /api/me/
-    PUT/PATCH /api/me/
-    """
-    serializer_class = ProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_object(self):
-        profile, _ = Profile.objects.get_or_create(user=self.request.user)
-        return profile
-
-
-class SkillListCreateView(generics.ListCreateAPIView):
-    queryset = Skill.objects.all()
-    serializer_class = SkillSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
-
-
-class SkillExchangeListCreateView(generics.ListCreateAPIView):
-    queryset = SkillExchange.objects.all()
-    serializer_class = SkillExchangeSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def perform_create(self, serializer):
-        serializer.save(requester=self.request.user)
-
-
+# -----------------------
+# CONTACT
+# -----------------------
 class ContactCreateView(generics.CreateAPIView):
     """
     Public contact endpoint:
@@ -76,10 +25,53 @@ class ContactCreateView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
 
-class ContactListView(generics.ListAPIView):
+# -----------------------
+# SKILLS
+# -----------------------
+class SkillListCreateView(generics.ListCreateAPIView):
     """
-    Admin-only list of contact messages.
+    GET /api/skills/  -> list all skills
+    POST /api/skills/ -> create a new skill for current user
     """
-    queryset = Contact.objects.all()
-    serializer_class = ContactSerializer
-    permission_classes = [permissions.IsAdminUser]
+    queryset = Skill.objects.all()
+    serializer_class = SkillSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+
+class SkillDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET    /api/skills/<id>/
+    PUT    /api/skills/<id>/
+    PATCH  /api/skills/<id>/
+    DELETE /api/skills/<id>/
+    """
+    queryset = Skill.objects.all()
+    serializer_class = SkillSerializer
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly,
+        IsOwnerOrReadOnly,
+    ]
+
+
+# -----------------------
+# SKILL EXCHANGES
+# -----------------------
+class SkillExchangeListCreateView(generics.ListCreateAPIView):
+    """
+    GET  /api/exchanges/ -> list exchanges where you are requester or recipient
+    POST /api/exchanges/ -> create a new exchange request
+    """
+    serializer_class = SkillExchangeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return SkillExchange.objects.filter(
+            Q(requester=user) | Q(recipient=user)
+        ).distinct()
+
+    def perform_create(self, serializer):
+        serializer.save(requester=self.request.user)
