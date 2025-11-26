@@ -4,7 +4,8 @@ from dj_rest_auth.registration.serializers import (
 from rest_framework import serializers
 
 from .models import Profile, Skill, SkillExchange
-
+from rest_framework import serializers
+from .models import Contact
 
 class RegisterSerializer(DjRestAuthRegisterSerializer):
     """
@@ -48,3 +49,9 @@ class SkillExchangeSerializer(serializers.ModelSerializer):
         model = SkillExchange
         fields = "__all__"
         read_only_fields = ["owner", "created_at", "updated_at"]
+
+class ContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = "__all__"
+        read_only_fields = ["created_at", "is_resolved"]

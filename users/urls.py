@@ -1,24 +1,22 @@
 from django.urls import path
-
 from .views import (
     RegisterAPIView,
     MyProfileView,
     SkillListCreateView,
     SkillExchangeListCreateView,
+    ContactCreateView,
+    ContactListView,
 )
 
 urlpatterns = [
-    # POST /api/register/
     path("register/", RegisterAPIView.as_view(), name="register"),
-
-    # GET/PUT/PATCH /api/me/
     path("me/", MyProfileView.as_view(), name="my-profile"),
-
-    # (you'll use these later)
     path("skills/", SkillListCreateView.as_view(), name="skill-list-create"),
     path(
-        "exchanges/",
+        "skill-exchanges/",
         SkillExchangeListCreateView.as_view(),
         name="skill-exchange-list-create",
     ),
+    path("contact/", ContactCreateView.as_view(), name="contact-create"),
+    path("contact/messages/", ContactListView.as_view(), name="contact-list"),
 ]
