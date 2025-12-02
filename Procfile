@@ -1,1 +1,1 @@
-web: gunicorn skillloop.wsgi --log-file -
+web: gunicorn skillloop.wsgi 

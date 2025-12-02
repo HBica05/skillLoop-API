@@ -14,24 +14,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ---------------------------------------------------------------------
 # Core security & debug
 # ---------------------------------------------------------------------
+# In production on Heroku you will set SECRET_KEY + DEBUG via Config Vars
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-secret-key-change-me")
 DEBUG = os.environ.get("DEBUG", "True").lower() not in ("0", "false", "no")
 
+# Allow localhost in dev; override with ALLOWED_HOSTS in Heroku config
 ALLOWED_HOSTS = os.environ.get(
     "ALLOWED_HOSTS",
-    "127.0.0.1,localhost"
+    "127.0.0.1,localhost,.herokuapp.com"
 ).split(",")
 
+# CSRF / CORS – defaults for local dev; override in Heroku config
 CSRF_TRUSTED_ORIGINS = os.environ.get(
     "CSRF_TRUSTED_ORIGINS",
-    "http://localhost:3000"
+    "http://localhost:3000,https://localhost:3000"
 ).split(",")
 
 CORS_ALLOWED_ORIGINS = os.environ.get(
     "CORS_ALLOWED_ORIGINS",
-    "http://localhost:3000"
+    "http://localhost:3000,https://localhost:3000"
 ).split(",")
 
+# We’re using token auth, not cookies, so this can stay False
 CORS_ALLOW_CREDENTIALS = False
 
 # ---------------------------------------------------------------------
@@ -95,7 +99,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "skillloop.wsgi.application"
 
 # ---------------------------------------------------------------------
-# Database
+# Database (SQLite locally, Postgres on Heroku via DATABASE_URL)
 # ---------------------------------------------------------------------
 DATABASES = {
     "default": {
@@ -104,8 +108,12 @@ DATABASES = {
     }
 }
 
+# If Heroku provides DATABASE_URL, use Postgres instead
 if os.environ.get("DATABASE_URL"):
-    DATABASES["default"] = dj_database_url.config(conn_max_age=600, ssl_require=True)
+    DATABASES["default"] = dj_database_url.config(
+        conn_max_age=600,
+        ssl_require=True,
+    )
 
 # ---------------------------------------------------------------------
 # Password validation
@@ -126,18 +134,24 @@ USE_I18N = True
 USE_TZ = True
 
 # ---------------------------------------------------------------------
-# Static
+# Static files / WhiteNoise
 # ---------------------------------------------------------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
 }
 
+# Make request.is_secure() accurate behind Heroku’s proxy
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+# Extra security when DEBUG is False (i.e. on Heroku)
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
@@ -146,10 +160,11 @@ if not DEBUG:
 # ---------------------------------------------------------------------
 # DRF / AUTH
 # ---------------------------------------------------------------------
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Custom adapter that removes any phone-field assumptions
 ACCOUNT_ADAPTER = "users.adapters.NoPhoneAccountAdapter"
+
 ACCOUNT_AUTHENTICATION_METHOD = "username"
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "none"
@@ -157,5 +172,5 @@ ACCOUNT_USERNAME_REQUIRED = True
 
 ACCOUNT_SIGNUP_FIELDS = ["username", "email"]
 
-# No phone number, so disable all phone logic
+# No phone number, so disable all phone logic/forms
 ACCOUNT_FORMS = {}
