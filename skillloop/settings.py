@@ -15,8 +15,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Core security & debug
 # ---------------------------------------------------------------------
 # In production on Heroku you will set SECRET_KEY + DEBUG via Config Vars
-SECRET_KEY = os.environ.get("SECRET_KEY", "feujt-cj$8mr+wku1k$+x+$#%65*3ys$9)1-0t1p^6jr0xl7x)")
-DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "ture", "yes")
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-secret-key-change-me")
+DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "true", "yes")
 
 # Allow localhost in dev; override with ALLOWED_HOSTS in Heroku config
 ALLOWED_HOSTS = os.environ.get(
