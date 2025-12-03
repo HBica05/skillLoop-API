@@ -15,24 +15,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Core security & debug
 # ---------------------------------------------------------------------
 # In production on Heroku you will set SECRET_KEY + DEBUG via Config Vars
-SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-secret-key-change-me")
-DEBUG = os.environ.get("DEBUG", "True").lower() not in ("0", "false", "no")
+SECRET_KEY = os.environ.get("SECRET_KEY", "feujt-cj$8mr+wku1k$+x+$#%65*3ys$9)1-0t1p^6jr0xl7x)")
+DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "ture", "yes")
 
 # Allow localhost in dev; override with ALLOWED_HOSTS in Heroku config
 ALLOWED_HOSTS = os.environ.get(
     "ALLOWED_HOSTS",
-    "127.0.0.1,localhost,.herokuapp.com"
+    "127.0.0.1,localhost,skillloop-35d5850f8d20.herokuapp.com"
 ).split(",")
 
 # CSRF / CORS – defaults for local dev; override in Heroku config
 CSRF_TRUSTED_ORIGINS = os.environ.get(
     "CSRF_TRUSTED_ORIGINS",
-    "http://localhost:3000,https://localhost:3000"
+    "http://localhost:3000,https://skillloop-35d5850f8d20.herokuapp.com"
 ).split(",")
 
 CORS_ALLOWED_ORIGINS = os.environ.get(
     "CORS_ALLOWED_ORIGINS",
-    "http://localhost:3000,https://localhost:3000"
+    "http://localhost:3000,https://skillloop-35d5850f8d20.herokuapp.com"
 ).split(",")
 
 # We’re using token auth, not cookies, so this can stay False
