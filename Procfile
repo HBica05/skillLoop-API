@@ -1,1 +1,1 @@
-web: gunicorn skillloop.wsgi:application
+web: gunicorn skillloop.wsgi
