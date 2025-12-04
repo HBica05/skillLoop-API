@@ -29,3 +29,6 @@ tzdata==2025.1
 urllib3==2.3.0
 webencodings==0.5.1
 whitenoise==6.9.0
+djangorestframework
+django-cors-headers
+dj-rest-auth
