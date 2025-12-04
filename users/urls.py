@@ -5,6 +5,7 @@ from .views import (
     SkillListCreateView,
     SkillDetailView,
     SkillExchangeListCreateView,
+    RegisterAPIView
 )
 
 urlpatterns = [
@@ -17,4 +18,7 @@ urlpatterns = [
 
     # Exchanges
     path("exchanges/", SkillExchangeListCreateView.as_view(), name="exchange-list-create"),
+
+    # /api/register/
+    path("register/", RegisterAPIView.as_view(), name="register"),
 ]
