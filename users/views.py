@@ -55,6 +55,11 @@ class SkillDetailView(generics.RetrieveUpdateDestroyAPIView):
         IsOwnerOrReadOnly,
     ]
 
+class SkillExchangeDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = SkillExchange.objects.all()
+    serializer_class = SkillExchangeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
 
 # -----------------------
 # SKILL EXCHANGES

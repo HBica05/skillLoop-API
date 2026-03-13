@@ -107,7 +107,6 @@ class SkillExchange(models.Model):
     def __str__(self):
         return f"{self.requester} ↔ {self.recipient} ({self.status})"
 
-
 class Contact(models.Model):
     """
     Simple contact / support message left by a visitor or user.
