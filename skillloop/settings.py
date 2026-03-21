@@ -5,7 +5,8 @@ Django settings for skillloop project.
 from pathlib import Path
 import os
 import dj_database_url
-
+from dotenv import load_dotenv
+load_dotenv()
 # ---------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------
@@ -159,17 +160,35 @@ if not DEBUG:
 # ---------------------------------------------------------------------
 # DRF / AUTH
 # ---------------------------------------------------------------------
+# ---------------------------------------------------------------------
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Custom adapter that removes any phone-field assumptions
 ACCOUNT_ADAPTER = "users.adapters.NoPhoneAccountAdapter"
 
-ACCOUNT_AUTHENTICATION_METHOD = "username"
-ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "none"
-ACCOUNT_USERNAME_REQUIRED = True
-
-ACCOUNT_SIGNUP_FIELDS = ["username", "email"]
-
-# No phone number, so disable all phone logic/forms
+ACCOUNT_LOGIN_METHODS = {"username"}
+ACCOUNT_SIGNUP_FIELDS = ["username*", "email*"]
 ACCOUNT_FORMS = {}
+
+# DRF — token auth, browsable API in dev only
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+    ],
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ]
+    + (["rest_framework.renderers.BrowsableAPIRenderer"] if DEBUG else []),
+}
+
+# dj-rest-auth — use token auth
+REST_AUTH = {
+    "USE_JWT": False,
+    "TOKEN_MODEL": "rest_framework.authtoken.models.Token",
+    "REGISTER_SERIALIZER": "users.serializers.RegisterSerializer",
+}
