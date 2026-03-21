@@ -2,10 +2,8 @@ from dj_rest_auth.registration.serializers import (
     RegisterSerializer as DjRestAuthRegisterSerializer,
 )
 from rest_framework import serializers
+from .models import Profile, Skill, SkillExchange, Contact
 
-from .models import Profile, Skill, SkillExchange
-from rest_framework import serializers
-from .models import Contact
 
 class RegisterSerializer(DjRestAuthRegisterSerializer):
     """
@@ -13,18 +11,11 @@ class RegisterSerializer(DjRestAuthRegisterSerializer):
     Extends dj-rest-auth's RegisterSerializer and adds optional
     profile fields (bio, location).
     """
-
-    # Explicitly say there is NO phone field, to avoid '_has_phone_field' errors
     _has_phone_field = False
-
     bio = serializers.CharField(required=False, allow_blank=True)
     location = serializers.CharField(required=False, allow_blank=True)
 
     def get_cleaned_data(self):
-        """
-        Called by dj-rest-auth when creating the User.
-        We add 'bio' and 'location' to the cleaned data dict.
-        """
         data = super().get_cleaned_data()
         data["bio"] = self.validated_data.get("bio", "")
         data["location"] = self.validated_data.get("location", "")
@@ -32,23 +23,44 @@ class RegisterSerializer(DjRestAuthRegisterSerializer):
 
 
 class SkillSerializer(serializers.ModelSerializer):
+    owner_username = serializers.ReadOnlyField(source="owner.username")
+
     class Meta:
         model = Skill
-        fields = "__all__"
+        fields = [
+            "id", "owner", "owner_username",
+            "title", "description", "category",
+            "level", "is_remote", "created_at",
+        ]
+        read_only_fields = ["owner", "created_at"]
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    username = serializers.ReadOnlyField(source="user.username")
+    # Nest the user's skills so the frontend can read them from the profile
+    skills = SkillSerializer(source="user.skills", many=True, read_only=True)
+
     class Meta:
         model = Profile
-        fields = ["id", "user", "bio", "location", "avatar", "skills"]
+        fields = ["id", "user", "username", "bio", "location", "avatar", "skills"]
         read_only_fields = ["user"]
 
 
 class SkillExchangeSerializer(serializers.ModelSerializer):
+    requester_username = serializers.ReadOnlyField(source="requester.username")
+    recipient_username = serializers.ReadOnlyField(source="recipient.username")
+
     class Meta:
         model = SkillExchange
-        fields = "__all__"
-        read_only_fields = ["owner", "created_at", "updated_at"]
+        fields = [
+            "id", "requester", "requester_username",
+            "recipient", "recipient_username",
+            "skill_offered", "skill_requested",
+            "message", "status",
+            "created_at", "updated_at",
+        ]
+        read_only_fields = ["requester", "created_at", "updated_at"]
+
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
