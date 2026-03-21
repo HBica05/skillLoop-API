@@ -1,10 +1,9 @@
 from django.contrib.auth.models import User
 from django.db.models import Q
-
 from rest_framework import generics, permissions
-
-from .models import Skill, SkillExchange, Contact
+from .models import Profile, Skill, SkillExchange, Contact
 from .serializers import (
+    ProfileSerializer,
     SkillSerializer,
     SkillExchangeSerializer,
     ContactSerializer,
@@ -13,12 +12,46 @@ from .permissions import IsOwnerOrReadOnly
 
 
 # -----------------------
+# PROFILE
+# -----------------------
+class ProfileListView(generics.ListAPIView):
+    """
+    GET /api/profiles/  -> list all profiles (read-only, public)
+    """
+    queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+
+class ProfileDetailView(generics.RetrieveUpdateAPIView):
+    """
+    GET   /api/profiles/<id>/  -> retrieve a profile
+    PUT   /api/profiles/<id>/  -> update (owner only)
+    PATCH /api/profiles/<id>/  -> partial update (owner only)
+    """
+    queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+
+class CurrentUserProfileView(generics.RetrieveUpdateAPIView):
+    """
+    GET   /api/profile/me/  -> get the logged-in user's own profile
+    PATCH /api/profile/me/  -> update the logged-in user's own profile
+    """
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.profile
+
+
+# -----------------------
 # CONTACT
 # -----------------------
 class ContactCreateView(generics.CreateAPIView):
     """
-    Public contact endpoint:
-    - anyone can POST name, email, subject, message
+    POST /api/contact/  -> anyone can submit a contact message
     """
     queryset = Contact.objects.all()
     serializer_class = ContactSerializer
@@ -30,8 +63,8 @@ class ContactCreateView(generics.CreateAPIView):
 # -----------------------
 class SkillListCreateView(generics.ListCreateAPIView):
     """
-    GET /api/skills/  -> list all skills
-    POST /api/skills/ -> create a new skill for current user
+    GET  /api/skills/  -> list all skills
+    POST /api/skills/  -> create a skill (authenticated)
     """
     queryset = Skill.objects.all()
     serializer_class = SkillSerializer
@@ -50,15 +83,7 @@ class SkillDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Skill.objects.all()
     serializer_class = SkillSerializer
-    permission_classes = [
-        permissions.IsAuthenticatedOrReadOnly,
-        IsOwnerOrReadOnly,
-    ]
-
-class SkillExchangeDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = SkillExchange.objects.all()
-    serializer_class = SkillExchangeSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
 
 # -----------------------
@@ -66,8 +91,8 @@ class SkillExchangeDetailView(generics.RetrieveUpdateDestroyAPIView):
 # -----------------------
 class SkillExchangeListCreateView(generics.ListCreateAPIView):
     """
-    GET  /api/exchanges/ -> list exchanges where you are requester or recipient
-    POST /api/exchanges/ -> create a new exchange request
+    GET  /api/exchanges/  -> list exchanges where you are requester or recipient
+    POST /api/exchanges/  -> create a new exchange request
     """
     serializer_class = SkillExchangeSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -80,3 +105,15 @@ class SkillExchangeListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(requester=self.request.user)
+
+
+class SkillExchangeDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET    /api/exchanges/<id>/
+    PUT    /api/exchanges/<id>/
+    PATCH  /api/exchanges/<id>/
+    DELETE /api/exchanges/<id>/
+    """
+    queryset = SkillExchange.objects.all()
+    serializer_class = SkillExchangeSerializer
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
