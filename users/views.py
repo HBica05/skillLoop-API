@@ -62,18 +62,25 @@ class ContactCreateView(generics.CreateAPIView):
 # SKILLS
 # -----------------------
 class SkillListCreateView(generics.ListCreateAPIView):
-    """
-    GET  /api/skills/  -> list all skills
-    POST /api/skills/  -> create a skill (authenticated)
-    """
-    queryset = Skill.objects.all()
     serializer_class = SkillSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    def get_queryset(self):
+        queryset = Skill.objects.all()
+        search = self.request.query_params.get('search', '')
+        category = self.request.query_params.get('category', '')
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(description__icontains=search) |
+                Q(category__icontains=search)
+            )
+        if category:
+            queryset = queryset.filter(category__iexact=category)
+        return queryset
+
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
-
-
 class SkillDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     GET    /api/skills/<id>/
