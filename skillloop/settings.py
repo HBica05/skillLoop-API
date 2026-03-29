@@ -18,23 +18,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # In production on Heroku you will set SECRET_KEY + DEBUG via Config Vars
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-secret-key-change-me")
 
-# DEBUG = True only if DEBUG env var is "1", "true" or "yes"
-DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "true", "yes")
+# DEBUG = True
+DEBUG = os.environ.get("DEBUG", "False") =="True"
 
-ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS",
-    "127.0.0.1,localhost,skillloop-35d5850f8d20.herokuapp.com",
-).split(",")
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    os.environ.get('ALLOWED_HOSTS', ''),
+]
 
 CSRF_TRUSTED_ORIGINS = os.environ.get(
     "CSRF_TRUSTED_ORIGINS",
     "http://localhost:3000,https://skillloop-35d5850f8d20.herokuapp.com",
 ).split(",")
 
-CORS_ALLOWED_ORIGINS = os.environ.get(
-    "CORS_ALLOWED_ORIGINS",
-    "http://localhost:3000,https://skillloop-35d5850f8d20.herokuapp.com",
-).split(",")
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    os.environ.get('CORS_ALLOWED_ORIGIN', ''),
+]
 # We’re using token auth, not cookies, so this can stay False
 CORS_ALLOW_CREDENTIALS = False
 
@@ -102,10 +103,10 @@ WSGI_APPLICATION = "skillloop.wsgi.application"
 # Database (SQLite locally, Postgres on Heroku via DATABASE_URL)
 # ---------------------------------------------------------------------
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+'default': dj_database_url.config(
+default='sqlite:///db.sqlite3',
+conn_max_age=600
+)   
 }
 
 # If Heroku provides DATABASE_URL, use Postgres instead
@@ -137,7 +138,7 @@ USE_TZ = True
 # Static files / WhiteNoise
 # ---------------------------------------------------------------------
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 STORAGES = {
     "default": {
