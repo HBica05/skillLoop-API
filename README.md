@@ -2,9 +2,8 @@
 
 The Django REST Framework backend for SkillLoop — a skill-sharing platform where users can offer skills, browse others, and request skill exchanges.
 
-**Live API:** _add Heroku API URL here_  
-**Frontend repo:** https://github.com/HBica05/skillloop-frontend
-
+Live site: https://skillloopfrontend-952dcb19a921.herokuapp.com
+Backend API: https://skillloop-api-hbica-3bb338c1557b.herokuapp.com
 ---
 
 ## Table of Contents
