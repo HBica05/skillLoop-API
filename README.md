@@ -1,9 +1,11 @@
-# SkillLoop API
+# SkilLoop API
 
-The Django REST Framework backend for SkillLoop — a skill-sharing platform where users can offer skills, browse others, and request skill exchanges.
+The Django REST Framework backend for SkilLoop — a skill-sharing platform where users can offer skills, browse others, and request skill exchanges.
 
-Live site: https://skillloopfrontend-952dcb19a921.herokuapp.com
-Backend API: https://skillloop-api-hbica-3bb338c1557b.herokuapp.com
+**Live API:** https://skillloop-api-hbica-3bb338c1557b.herokuapp.com
+
+**Frontend repo:** https://github.com/HBica05/skillloop-frontend
+
 ---
 
 ## Table of Contents
@@ -22,7 +24,7 @@ Backend API: https://skillloop-api-hbica-3bb338c1557b.herokuapp.com
 
 ## Project Purpose
 
-SkillLoop API provides a RESTful backend for the SkillLoop frontend. It handles user authentication, skill management, skill exchange requests, user profiles and contact messages.
+SkilLoop API provides a RESTful backend for the SkillLoop frontend. It handles user authentication, skill management, skill exchange requests, user profiles and contact messages.
 
 ### Project Goals
 
@@ -165,6 +167,13 @@ CONTACT
 - IsOwnerOrReadOnly — custom permission, checks object.owner or object.user == request.user
 - AllowAny — used on Contact (public)
 
+### Custom Permissions
+
+IsOwnerOrReadOnly is a custom permission class written for this project. It checks whether the requesting user is the owner of the object before allowing write access.
+
+### PEP8 Compliance
+
+All Python code was checked against PEP8 guidelines using pycodestyle. No significant issues were found.
 ---
 
 ## Tech Stack
@@ -379,6 +388,7 @@ All secret values are stored in environment variables and never committed to the
 - Claude AI — development assistance and code review
 - ChatGPT — development assistance
 - GitHub — version control
+- Canva — design tool used for frontend assets (https://www.canva.com)
 
 ---
 
@@ -388,5 +398,6 @@ Haadiyah Bica
 GitHub: https://github.com/HBica05
 
 ---
+[⬆ Back to top](#skilloop-api)
 
 *This project was created for educational purposes as part of the Code Institute Diploma in Full Stack Software Development (Advanced Front-End).*
