@@ -174,6 +174,7 @@ IsOwnerOrReadOnly is a custom permission class written for this project. It chec
 ### PEP8 Compliance
 
 All Python code was checked against PEP8 guidelines using pycodestyle. No significant issues were found.
+
 ---
 
 ## Tech Stack
